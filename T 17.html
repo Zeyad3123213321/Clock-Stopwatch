@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clock & Stopwatch</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .clock-container, .stopwatch-container {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 30px 50px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        .clock, .stopwatch-display {
+            font-size: 5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .date {
+            font-size: 1.5rem;
+            opacity: 0.8;
+        }
+        .stopwatch-container {
+            display: none;
+        }
+        .stopwatch-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 25px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .start { background-color: #4CAF50; color: white; }
+        .stop { background-color: #f44336; color: white; }
+        .reset { background-color: #2196F3; color: white; }
+        .btn:hover { opacity: 0.8; transform: scale(1.05); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Stylish Show Stopwatch Button */
+        #toggleStopwatch {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 12px 30px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(255, 75, 43, 0.4);
+            transition: all 0.3s ease;
+        }
+        #toggleStopwatch:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 75, 43, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="clock-container">
+            <div class="clock">
+                <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>
+                <span id="ampm" class="ampm">AM</span>
+            </div>
+            <div class="date" id="date">Monday, January 1, 2023</div>
+        </div>
+        <button id="toggleStopwatch" class="btn">Show Stopwatch</button>
+        <div class="stopwatch-container">
+            <div class="stopwatch-display">
+                <span id="sw-hours">00</span>:<span id="sw-minutes">00</span>:<span id="sw-seconds">00</span>.<span id="sw-milliseconds">00</span>
+            </div>
+            <div class="stopwatch-controls">
+                <button id="startStopwatch" class="btn start">Start</button>
+                <button id="stopStopwatch" class="btn stop" disabled>Stop</button>
+                <button id="resetStopwatch" class="btn reset">Reset</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('minutes').textContent = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('seconds').textContent = now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('ampm').textContent = ampm;
+            document.getElementById('date').textContent = now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        function syncClock() {
+            updateClock();
+            setTimeout(() => setInterval(updateClock, 1000), 1000 - new Date().getMilliseconds());
+        }
+        syncClock();
+
+        let stopwatchInterval, stopwatchTime = 0, stopwatchRunning = false;
+        function updateStopwatchDisplay() {
+            const hours = Math.floor(stopwatchTime / 3600000);
+            const minutes = Math.floor((stopwatchTime % 3600000) / 60000);
+            const seconds = Math.floor((stopwatchTime % 60000) / 1000);
+            const milliseconds = Math.floor((stopwatchTime % 1000) / 10);
+            document.getElementById('sw-hours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('sw-minutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('sw-seconds').textContent = seconds.toString().padStart(2, '0');
+            document.getElementById('sw-milliseconds').textContent = milliseconds.toString().padStart(2, '0');
+        }
+        function startStopwatch() {
+            if (!stopwatchRunning) {
+                const startTime = Date.now() - stopwatchTime;
+                stopwatchInterval = setInterval(() => {
+                    stopwatchTime = Date.now() - startTime;
+                    updateStopwatchDisplay();
+                }, 10);
+                stopwatchRunning = true;
+                document.getElementById('startStopwatch').disabled = true;
+                document.getElementById('stopStopwatch').disabled = false;
+            }
+        }
+        function stopStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchRunning = false;
+            document.getElementById('startStopwatch').disabled = false;
+            document.getElementById('stopStopwatch').disabled = true;
+        }
+        function resetStopwatch() {
+            stopStopwatch();
+            stopwatchTime = 0;
+            updateStopwatchDisplay();
+        }
+        document.getElementById('startStopwatch').addEventListener('click', startStopwatch);
+        document.getElementById('stopStopwatch').addEventListener('click', stopStopwatch);
+        document.getElementById('resetStopwatch').addEventListener('click', resetStopwatch);
+        document.getElementById('toggleStopwatch').addEventListener('click', function() {
+            const stopwatchContainer = document.querySelector('.stopwatch-container');
+            stopwatchContainer.style.display = stopwatchContainer.style.display === 'none' ? 'block' : 'none';
+            this.textContent = stopwatchContainer.style.display === 'none' ? 'Show Stopwatch' : 'Hide Stopwatch';
+        });
+        updateStopwatchDisplay();
+    </script>
+</body>
+</html>
